@@ -23,6 +23,10 @@ unsigned char pattern2[] = {0x80, 0x3D, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x74};
 unsigned char patch2[] = {0xEB};
 int patch_sz2 = 1;
 
+// CTFFileUGCUploadHandler::OnFilePrepared
+unsigned char size_limit_pattern[] = {0x8D, 0x48, 0xFF, 0x81, 0xF9, 0xFF, 0xFF, 0x7F, 0x0C, 0x76};
+int size_limit_bump = 5;
+
 // acquire hwnd to tf2 window
 // wait if the window is not there yet
 HWND get_tf2_window(void) {
@@ -150,6 +154,10 @@ unsigned char pattern2[] = {0x80, 0xA0, 0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x0F};
 unsigned char patch2[] = {0x48, 0xE9};
 int patch_sz2 = 2;
 
+// CTFFileUGCUploadHandler::OnFilePrepared
+unsigned char size_limit_pattern[] = {0x8D, 0x40, 0xFF, 0x3D, 0xFF, 0xFF, 0x7F, 0x0C, 0x76};
+int size_limit_bump = 4;
+
 bool get_client_so(void) { return 1; }
 
 bool attach_to_tf2(void) {
@@ -254,43 +262,25 @@ bool calc_client_module_bounds(void) {
 bool do_patch(void) {
   printf("Patching...\n");
 
-  // CConfirmCustomizeTextureDialog::PerformFilter
-  unsigned char *addr = find_mem_cl(pattern, sizeof(pattern));
+  unsigned char *addr =
+      find_mem_cl(size_limit_pattern, sizeof(size_limit_pattern));
   if (!addr) {
-    fprintf(stderr,
-            "Failed to find CConfirmCustomizeTextureDialog::PerformFilter "
-            "pattern in client library!\n");
-  } else {
-    verbose_print("CConfirmCustomizeTextureDialog::PerformFilter pattern addr: "
-                  "0x%" PRIXPTR " (offset: 0x%" PRIXPTR ")\n",
-                  (uintptr_t)addr, (uintptr_t)(addr - pinfo.cl_base));
-
-    // rewrite call to mov in order to force identity filter
-    addr += addr_bump;
-    set_mem(addr, (unsigned char[]){0xB8, 0x01, 0x00, 0x00, 0x00}, 5);
-    verbose_print("Rewrote CALL to MOV\n");
-
-    // disable blending
-    // check memory first
-    addr = find_mem(pattern2, sizeof(pattern2), addr, 200);
-    if (!addr) {
-      fprintf(stderr,
-              "Failed to find CConfirmCustomizeTextureDialog::PerformFilter "
-              "pattern #2 in client library!\n");
-    } else {
-      verbose_print("Found pattern 2 0x%" PRIXPTR "\n", (uintptr_t)addr);
-      // rewrite jz to jmp
-      addr += 7;
-      set_mem(addr, patch2, patch_sz2);
-      verbose_print("Rewrote JZ to JMP\n");
-
-      // and thats pretty much it
-      printf("Done!\n");
-      return true;
-    }
+    fprintf(stderr, "Failed to find CTFFileUGCUploadHandler::OnFilePrepared "
+                    "pattern in client library!\n");
+    return false;
   }
 
-  return false;
+  verbose_print("CTFFileUGCUploadHandler::OnFilePrepared pattern addr: "
+                "0x%" PRIXPTR " (offset: 0x%" PRIXPTR ")\n",
+                (uintptr_t)addr, (uintptr_t)(addr - pinfo.cl_base));
+
+  addr += size_limit_bump;
+  if (!set_mem(addr, (unsigned char[]){0xFE, 0xFF, 0xFF, 0xFF}, 4))
+    return false;
+  verbose_print("Raised size limit\n");
+
+  printf("Done!\n");
+  return true;
 }
 
 int main(int argc, char *argv[]) {

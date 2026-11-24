@@ -1,4 +1,4 @@
-name: AppImage Build
+name: Build
 on:
   push:
     branches: ["current"]
@@ -15,11 +15,9 @@ on:
           - Release
           - Debug
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-22.04
     timeout-minutes: 5
-    permissions:
-      contents: write
     env:
       APPIMAGE_EXTRACT_AND_RUN: 1
       BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
@@ -48,19 +46,6 @@ jobs:
       - name: Build
         run: make TARGET=64 MODE=${{ env.BUILD_TYPE }}
 
-      - name: Set build metadata
-        id: meta
-        run: |
-          TIMESTAMP=$(git log -1 --format=%cI)
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "timestamp=${TIMESTAMP}" >> "$GITHUB_OUTPUT"
-          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Warn if no artifact will be published
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/current'
-        run: |
-          echo "::warning::Manual dispatch on a non-current branch — the build will run but no release or PR artifact will be created."
-
       - name: Create AppImage
         run: |
           export ARCH=x86_64
@@ -69,7 +54,7 @@ jobs:
           else
             ICON_FILE="tf2patcher.png"
           fi
-          
+
           ./linuxdeploy-x86_64.AppImage --appdir AppDir \
             -e bin/tf2patcher \
             -i "$ICON_FILE" \
@@ -77,17 +62,75 @@ jobs:
             --output appimage
           mv tf2patcher-*.AppImage tf2patcher.AppImage
 
-      - name: Upload PR artifact
-        if: github.event_name == 'pull_request'
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tf2patcher-pr-${{ github.event.number }}
-          path: tf2patcher.AppImage
+          name: tf2patcher-linux64
+          path: |
+            tf2patcher.AppImage
+            bin/tf2patcher
+
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: >-
+            make
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-binutils
+
+      - name: Build
+        run: make TARGET=64 MODE=${{ env.BUILD_TYPE }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2patcher-win64
+          path: bin/tf2patcher.exe
+
+  release:
+    needs: [build-linux, build-windows]
+    if: >
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      && github.ref == 'refs/heads/current'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set build metadata
+        id: meta
+        run: |
+          echo "timestamp=$(git log -1 --format=%cI)" >> "$GITHUB_OUTPUT"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          cp dist/tf2patcher-linux64/tf2patcher.AppImage release/tf2patcher.AppImage
+          cp dist/tf2patcher-linux64/bin/tf2patcher release/tf2patcher
+          cp dist/tf2patcher-win64/tf2patcher.exe release/tf2patcher.exe
 
       - name: Continuous Release
-        if: >
-          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-          && github.ref == 'refs/heads/current'
         uses: softprops/action-gh-release@4dd30955cca228da305ffee6fbc3fc1f95d447c2
         with:
           tag_name: continuous
@@ -99,5 +142,6 @@ jobs:
             Built: ${{ steps.meta.outputs.timestamp }}
           prerelease: true
           files: |
-            tf2patcher.AppImage
-            bin/tf2patcher
+            release/tf2patcher.AppImage
+            release/tf2patcher
+            release/tf2patcher.exe

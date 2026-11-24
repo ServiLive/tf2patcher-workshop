@@ -32,8 +32,8 @@ ifeq ($(OS),Windows_NT)
 	appfile := $(addsuffix .exe,$(appfile))
 	LFLAGS += -lpsapi # for mingw support
 
-	resfilein := $(srcdir)\winres\$(appname).rc
-	resfileout := $(objdir)\$(appname).res
+	resfilein := $(srcdir)/winres/$(appname).rc
+	resfileout := $(objdir)/$(appname).res
 else
 	RM := rm -f
 	MKDIR := mkdir -p
@@ -54,7 +54,7 @@ $(dirs):
 
 ifeq ($(OS),Windows_NT)
 winres: $(resfilein)
-	windres --input $(resfilein) --output $(resfileout) --output-format=coff --target=$(restarget)
+	windres --include-dir $(srcdir)/winres --input $(resfilein) --output $(resfileout) --output-format=coff --target=$(restarget)
 endif
 
 clean:
