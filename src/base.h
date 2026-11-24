@@ -20,8 +20,9 @@
 #endif
 
 #ifdef WINDOWS
-#include "psapi.h"
 #include "windows.h"
+
+#include "psapi.h"
 #elif defined(LINUX)
 #include <fcntl.h>
 #include <stdio.h>
