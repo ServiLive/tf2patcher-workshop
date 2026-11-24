@@ -130,6 +130,11 @@ jobs:
           cp dist/tf2patcher-linux64/bin/tf2patcher release/tf2patcher
           cp dist/tf2patcher-win64/tf2patcher.exe release/tf2patcher.exe
 
+      - name: Move continuous tag
+        run: |
+          git tag -f continuous
+          git push -f origin continuous
+
       - name: Continuous Release
         uses: softprops/action-gh-release@4dd30955cca228da305ffee6fbc3fc1f95d447c2
         with:
