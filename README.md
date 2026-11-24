@@ -1,55 +1,49 @@
-# TF2 patcher for full-colored decals
+# TF2 patcher for increased Workshop upload limit
 
 ## Summary
 
-This tool allows you to remove various restrictions when applying a decal to a decalable item in TF2.
+This tool raises the 200 MiB (209.7 MB) worksholp map upload limit in TF2.
 
-In short, now you can apply fully-colored images to your Objectors, Flairs, Photo Badges and Clan Prides.
+This is a fork of [tf2patcher by yari-dog](https://github.com/yari-dog/tf2patcher-linux) only changed to patch and increase the map upload limit in-game (take in mind that the [TF2 code](https://github.com/ValveSoftware/source-sdk-2013/blob/3e957b70b167929f120360115d359d1ecb4c1699/src/game/client/tf/workshop/published_files.cpp#L398) states that the SteamUGC max upload filesize maybe around 400MB, perhaps it's been documented like that since a long time ago and they increased that limit at some point).
 
-This is a April 2026 update of [tf2patcher](https://github.com/dborodin836/tf2patcher) that ports compatibility to Linux.
+Bigger map sizes may take more than 10 minutes to upload (tested with [buzzies_dream_box_v1](https://steamcommunity.com/sharedfiles/filedetails/?id=3839085225) by [Chromsmith](https://steamcommunity.com/id/chromsmith)).
 
 ## Is it safe?
 
 > [!CAUTION]  
-> **USE AT YOU OWN RISK.**
+> **USE AT YOUR OWN RISK.**
 >
-> It is unlikely that this tool will be detected by VAC. **However:**
+> This tool could be detected by VAC. **However:**
 >
-> - It may be a good idea to take a look at current active issues;
 > - I recommend running TF2 in ``-insecure`` mode while you do this.
-> - After running this tool, **be sure to close TF2**. You can then safely open it again. This is not strictly
+> - If running this tool without ``-insecure``, **make sure to close TF2 before connecting to Casual or community servers**. You can then safely open it again. This is not strictly
     necessary, but it's best to clear all memory modifications before connecting to a secure server.
 
 ## How to use
 
 ### Windows
 
-1. Download the latest release [here](https://github.com/yari-dog/tf2patcher/releases/latest);
+1. Download the latest release [here](https://github.com/ServiLive/tf2patcher-workshop/releases/latest);
 
 2. Run tf2patcher and launch TF2 (or do it in reverse, the order does not matter. Linux shouldn't require sudo/doas);
 
-3. Now try applying a decal to your item - the preview pane should show a fully-colored image;
+3. Now try uploading or updating a map to the workshop (big map filesize may take a lot of time);
 
-4. **After you've applied your decal, close TF2 in order to remove any modifications caused by the patcher.**
+4. **After you finished with the tool, close TF2 in order to remove any modifications caused by the patcher.**
 
-## Building from source
+### Building Windows
 
-Run `make TARGET=32` or `make TARGET=64`, depending on which architecture you want to build for.
+Requires MinGW-w64 (`gcc`, `make` and `windres`). Run `make TARGET=64`.
 
-C11-aware compiler is required.
+### Building Linux
+
+Requires `gcc` and `make`. Run `make TARGET=64`.
 
 ## How does it work
 
 What exactly gets patched:
 
-- m_pFilterCombo->GetActiveItem() call gets changed to "mov eax, 1" (reg/imm32 form) - this forces an "Identity" filter
-  no matter what the schema says;
-
-- bDoBlendLayers conditional jump gets changed to an inconditional jump (this skips all blending code altogether). (this is a JLE > JMP patch on linux)
-
-## Linux support?
-
-This linux support was added by yari-dog. if you think it's swag you should call me a good boy.
+- The `unFileSize > kMaxFileSize` check in [`CTFFileUGCUploadHandler::OnFilePrepared`](https://github.com/ValveSoftware/source-sdk-2013/blob/3e957b70b167929f120360115d359d1ecb4c1699/src/game/client/tf/workshop/published_files.cpp#L389) gets its constant changed from 200 MiB to 4 GiB, raising the client-side size upload limit. Empty (0 byte) files are still rejected, and Steam's own Workshop size limit still applies (TODO: document the TF2 UGC max file size limit).
 
 ## License
 

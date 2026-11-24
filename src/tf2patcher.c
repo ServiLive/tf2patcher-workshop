@@ -11,18 +11,6 @@
 // platform-dependent code
 // TODO implement these for linux
 #ifdef WINDOWS
-// the memory values to use for patching
-// CConfirmCustomizeTextureDialog::PerformFilter
-unsigned char pattern[] = {0xBA, 0x04, 0x00, 0x00, 0x00, 0x48, 0x8B,
-                           0xFF, 0xFF, 0x90, 0xFF, 0xFF, 0x00, 0x00,
-                           0x48, 0x8B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                           0xE8, 0xFF, 0xFF, 0xFF, 0xFF, 0x85, 0xFF};
-int addr_bump = 21;
-
-unsigned char pattern2[] = {0x80, 0x3D, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x74};
-unsigned char patch2[] = {0xEB};
-int patch_sz2 = 1;
-
 // CTFFileUGCUploadHandler::OnFilePrepared
 unsigned char size_limit_pattern[] = {0x8D, 0x48, 0xFF, 0x81, 0xF9, 0xFF, 0xFF, 0x7F, 0x0C, 0x76};
 int size_limit_bump = 5;
@@ -140,25 +128,9 @@ void free_resources(void) {
 }
 
 #elif defined(LINUX)
-// the memory values to use for patching
-// CConfirmCustomizeTextureDialog::PerformFilter
-unsigned char pattern[] = {0x48, 0x89, 0xFF, 0xFF, 0x48, 0x8b, 0xFF,
-                           0x48, 0x8b, 0xFF, 0xFF, 0x90, 0xFF, 0xFF,
-                           0x00, 0x00, 0x48, 0x8B, 0xFF, 0xFF, 0xFF,
-                           0xFF, 0xFF, 0xE8, 0xFF, 0xFF, 0xFF, 0xFF};
-int addr_bump = 23;
-
-// NOTE: this patches a different jump to the windows version. it gives the
-// same effect, i just found this JLE before i found the JZ.
-unsigned char pattern2[] = {0x80, 0xA0, 0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x0F};
-unsigned char patch2[] = {0x48, 0xE9};
-int patch_sz2 = 2;
-
 // CTFFileUGCUploadHandler::OnFilePrepared
 unsigned char size_limit_pattern[] = {0x8D, 0x40, 0xFF, 0x3D, 0xFF, 0xFF, 0x7F, 0x0C, 0x76};
 int size_limit_bump = 4;
-
-bool get_client_so(void) { return 1; }
 
 bool attach_to_tf2(void) {
   // partly from equip region patcher by rsed
@@ -258,7 +230,6 @@ bool calc_client_module_bounds(void) {
 
 #endif
 
-// perform new patching method thanks to leaked tf2 source code
 bool do_patch(void) {
   printf("Patching...\n");
 
@@ -285,11 +256,11 @@ bool do_patch(void) {
 
 int main(int argc, char *argv[]) {
   printf("  -------------------------------------------\n"
-         "  |       TF2 decal tool patcher 2.0.5       |\n"
+         "  |       TF2 workshop size patcher 1.0.0    |\n"
          "  | (c) default-username, Apr 2020, Mar 2016 |\n"
-         "  |                        Updated June 2024 |\n"
+         "  |                    Updated November 2026 |\n"
 #ifdef LINUX
-         "  | linux port by yari             Apr  2026 |\n"
+         "  | linux tool port by yari        Apr  2026 |\n"
 #endif
          "  -------------------------------------------\n"
          "\n");

@@ -140,7 +140,8 @@ jobs:
             Build type: ${{ env.BUILD_TYPE }}
             Commit: ${{ github.sha }}
             Built: ${{ steps.meta.outputs.timestamp }}
-          prerelease: true
+          prerelease: false
+          make_latest: true
           files: |
             release/tf2patcher.AppImage
             release/tf2patcher
