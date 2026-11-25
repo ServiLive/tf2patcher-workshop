@@ -2,9 +2,9 @@
 
 ## Summary
 
-This tool raises the 200 MiB (209.7 MB) worksholp map upload limit in TF2.
+This tool raises the 200 MiB (209.7 MB) workshop map upload limit in TF2.
 
-This is a fork of [tf2patcher by yari-dog](https://github.com/yari-dog/tf2patcher-linux) only changed to patch and increase the map upload limit in-game (take in mind that the [TF2 code](https://github.com/ValveSoftware/source-sdk-2013/blob/3e957b70b167929f120360115d359d1ecb4c1699/src/game/client/tf/workshop/published_files.cpp#L398) states that the SteamUGC max upload filesize maybe around 400MB, perhaps it's been documented like that since a long time ago and they increased that limit at some point).
+This is a fork of [tf2patcher by yari-dog](https://github.com/yari-dog/tf2patcher-linux) only changed to patch and increase the map upload limit in-game (take in mind that from my tests, the max workshop map file size a map can be is something around 900 MB (also keep in mind that you need to have enough space in the TF2 Steam Cloud)).
 
 Bigger map sizes may take more than 10 minutes to upload (tested with [buzzies_dream_box_v1](https://steamcommunity.com/sharedfiles/filedetails/?id=3839085225) by [Chromsmith](https://steamcommunity.com/id/chromsmith)).
 
@@ -43,7 +43,7 @@ Requires `gcc` and `make`. Run `make TARGET=64`.
 
 What exactly gets patched:
 
-- The `unFileSize > kMaxFileSize` check in [`CTFFileUGCUploadHandler::OnFilePrepared`](https://github.com/ValveSoftware/source-sdk-2013/blob/3e957b70b167929f120360115d359d1ecb4c1699/src/game/client/tf/workshop/published_files.cpp#L389) gets its constant changed from 200 MiB to 4 GiB, raising the client-side size upload limit. Empty (0 byte) files are still rejected, and Steam's own Workshop size limit still applies (TODO: document the TF2 UGC max file size limit).
+- The `unFileSize > kMaxFileSize` check in [`CTFFileUGCUploadHandler::OnFilePrepared`](https://github.com/ValveSoftware/source-sdk-2013/blob/3e957b70b167929f120360115d359d1ecb4c1699/src/game/client/tf/workshop/published_files.cpp#L389) gets its constant changed from 200 MiB to 4 GiB, raising the client-side size upload limit. Empty (0 byte) files are still rejected, and Steam's own Workshop size limit still applies (860 MiB approximately or 900 MB).
 
 ## License
 
